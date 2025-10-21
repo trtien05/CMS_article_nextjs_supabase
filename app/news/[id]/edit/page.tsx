@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { News } from "@/types/news";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -16,6 +15,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { Editor } from "@tinymce/tinymce-react";
+import { Editor as TinyMCEEditor } from "tinymce";
 
 export default function EditNews({
   params,
@@ -23,6 +24,7 @@ export default function EditNews({
   params: { id: string };
 }) {
   const router = useRouter();
+  const editorRef = useRef<TinyMCEEditor | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -58,12 +60,19 @@ export default function EditNews({
     setSubmitting(true);
 
     try {
+      const content = editorRef.current
+        ? editorRef.current.getContent()
+        : "";
+
       const res = await fetch(`/api/news/${params.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          content: content,
+        }),
       });
 
       if (res.ok) {
@@ -142,18 +151,43 @@ export default function EditNews({
 
             <div className="space-y-2">
               <Label htmlFor="content">Content</Label>
-              <Textarea
-                id="content"
-                placeholder="Write your article content here..."
-                required
-                rows={10}
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    content: e.target.value,
-                  })
+              <Editor
+                apiKey={process.env.NEXT_PUBLIC_TINY_EDITOR_API_KEY}
+                onInit={(_evt, editor) =>
+                  (editorRef.current = editor)
                 }
+                initialValue={formData.content}
+                init={{
+                  height: 400,
+                  menubar: false,
+                  plugins: [
+                    "advlist",
+                    "autolink",
+                    "lists",
+                    "link",
+                    "image",
+                    "charmap",
+                    "preview",
+                    "anchor",
+                    "searchreplace",
+                    "visualblocks",
+                    "code",
+                    "fullscreen",
+                    "insertdatetime",
+                    "media",
+                    "table",
+                    "code",
+                    "help",
+                    "wordcount",
+                  ],
+                  toolbar:
+                    "undo redo | blocks | " +
+                    "bold italic forecolor | alignleft aligncenter " +
+                    "alignright alignjustify | bullist numlist outdent indent | " +
+                    "removeformat | help",
+                  content_style:
+                    "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+                }}
               />
             </div>
 
