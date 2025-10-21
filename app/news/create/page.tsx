@@ -117,7 +117,7 @@ export default function CreateNews() {
               <Label htmlFor="content">Content</Label>
               <Editor
                 apiKey={process.env.NEXT_PUBLIC_TINY_EDITOR_API_KEY}
-                onInit={(_evt, editor) =>
+                onInit={(_evt: any, editor: TinyMCEEditor) =>
                   (editorRef.current = editor)
                 }
                 initialValue=""
